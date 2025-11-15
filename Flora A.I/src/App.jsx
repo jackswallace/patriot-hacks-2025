@@ -7,6 +7,7 @@ import {
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
+import AiAdvice  from "./AiAdvice";
 
 function App() {
   const [plants, setPlants] = useState([]);
@@ -40,7 +41,8 @@ function App() {
     loadPlants();
   }, []);
 
-  return (
+  return  (
+   <>
     <div style={{ padding: "2rem", color: "white" }}>
       <h1>Plant Dashboard – Firestore Test</h1>
 
@@ -55,7 +57,11 @@ function App() {
         ))}
       </ul>
     </div>
-  );
+
+    {/* Render your AI advice component here */}
+    <AiAdvice />
+  </>
+);
 }
 
 
