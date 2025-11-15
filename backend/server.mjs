@@ -1,11 +1,14 @@
 // backend/server.mjs
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import { GoogleGenAI } from "@google/genai";
 
 const app = express();
 const port = process.env.PORT || 3001;
-
+// ✅ allow requests from the frontend
+app.use(cors());              // or: app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(express.json());
 app.use(express.json());
 
 // Set up Gemini client (backend only)
