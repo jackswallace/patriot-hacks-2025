@@ -1,10 +1,41 @@
-import React, { useState } from "react";
+import React, {useState } from "react";
 import { db } from "../firebase.js";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  getDatabase,
+  ref,
+  child,
+  query,
+  orderByKey,
+  limitToLast,
+  get,
+} from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
+const rtdb = getDatabase();
 
+async function getLatestReadings(deviceId) {
+  const metrics = ["humidity", "lightVal", "moisture", "temperature"];
+  const historyRef = ref(rtdb, `devices/${deviceId}/history`);
+  const result = {};
+
+  await Promise.all(
+    metrics.map(async (metric) => {
+      const metricRef = child(historyRef, metric);
+      const q = query(metricRef, orderByKey(), limitToLast(1));
+      const snap = await get(q);
+
+      if (snap.exists()) {
+        const val = Object.values(snap.val())[0];
+        result[metric] = val;
+      }
+    })
+  );
+
+  return result;
+}
 export default function AddPlant() {
+  const [selectedSensor,setSelectedSensor] = useState("");
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -13,15 +44,37 @@ export default function AddPlant() {
     soilType: "",
     growthStage: "",
     location: "",
+    humidity: "", 
+    lightVal: "", 
+    moisture: "", 
+    temperature: "" 
   });
 
   async function handleSubmit(e) {
     e.preventDefault();
     try {
+      let sensorData = {};
+
+      if (selectedSensor == "sensor1"){
+        const deviceId = "04:83:08:57:36:A4";
+        sensorData = await getLatestReadings(deviceId);
+
+      }else if(selectedSensor != "sensor1"){
+        const deviceId = "04:83:08:57:36:A4";
+        sensorData = {
+          humidity: 53,
+          lightVal: 1200,
+          moisture: 42,
+          temperature: 73.5
+        };
+      }
+
       await addDoc(collection(db, "plants"), {
         ...formData,
+        ...sensorData,
         createdAt: serverTimestamp(),
       });
+  
       navigate("/dashboard");
     } catch (err) {
       console.error("Error adding plant:", err);
@@ -45,7 +98,7 @@ export default function AddPlant() {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => 
+              onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
               placeholder="e.g. Sunflower"
@@ -112,12 +165,41 @@ export default function AddPlant() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90"
-          >
-            Add Plant
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              type="submit"
+              className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90"
+            >
+              Add Plant
+            </button>
+            <label className="flex flex-col text-sm whitespace-nowrap">
+              
+              <select
+                className="
+                    h-14
+                    rounded-xl
+                   bg-darkForestNew
+                   text-white
+                    px-3
+                    font-semibold
+                    border border-darkForestNew
+                   hover:bg-darkForestNew/90
+                    focus:outline-none
+                    focus:ring-2
+                   focus:ring-darkForestNew/70
+                    cursor-pointer
+                    "
+               value={selectedSensor}
+               onChange={(e) => setSelectedSensor(e.target.value)}
+              >
+                <option value="">Select sensor</option>
+                <option value="sensor1">Sensor 1</option>
+                <option value="sensor2">Sensor 2</option>
+                <option value="sensor3">Sensor 3</option>
+              </select>
+            </label>
+          </div>
+
         </form>
       </div>
     </div>
