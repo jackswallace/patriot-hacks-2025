@@ -7,7 +7,9 @@ import PlantInfoCard from "../components/PlantInfoCard.jsx";
 import SensorCard from "../components/SensorCard.jsx";
 import MiniGraph from "../components/MiniGraph.jsx";
 import AiAdvice from "../components/AiAdvice.jsx";
-import { nextTimeToWater } from "../api.js"; 
+import { nextTimeToWater } from "../api.js";
+import { getAIHealthScore } from "../api.js";
+
 
 const mockPlant = {
   name: "Monstera Deliciosa",
@@ -24,6 +26,9 @@ export default function PlantDetail() {
   const navigate = useNavigate();
   const [prediction, setPrediction] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
+  const [aiHealthScore, setAiHealthScore] = useState(mockPlant.aiHealthScore);
+  const [loadingHealthScore, setLoadingHealthScore] = useState(false);
+
 
   const sensors = useMemo(
     () => ({
@@ -35,6 +40,26 @@ export default function PlantDetail() {
     }),
     []
   );
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingHealthScore(true);
+
+    (async () => {
+      try {
+        const score = await getAIHealthScore(mockPlant, sensors);
+        if (cancelled) return;
+        setAiHealthScore(score);
+      } catch (err) {
+        console.error("Error getting AI health score:", err);
+      } finally {
+        if (!cancelled) setLoadingHealthScore(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sensors]);
 
   const sensorDataSeries = useMemo(
     () => ({
@@ -91,7 +116,7 @@ export default function PlantDetail() {
         </button>
 
         <div className="mb-8">
-          <PlantInfoCard plant={mockPlant} />
+          <PlantInfoCard plant={ { ...mockPlant, aiHealthScore }} />
         </div>
 
         {/* two-column sensor grid */}

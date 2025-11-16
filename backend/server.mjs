@@ -96,7 +96,73 @@ app.post('/api/getPlantAdvice', async (req, res) => {
     res.status(500).json({ error: 'AI request failed' });
   }
 });
+app.post('/api/getAIHealthScore', async (req, res) => {
+  try {
+    const { plantName,
+      plantType,
+      plantSoilType,
+      plantGrowthStage,
+      plantLocation,
+      plantStartDate,
+      airQuality,
+      airHumidity,
+      lightLux,
+      soilMoisture,
+      soilTemp, } = req.body;
 
+    const prompt = `
+You are a plant health scoring assistant.
+
+Using the following data about a single plant, estimate its current health as an integer percentage from 0 to 100, where:
+- 0 means the plant is in critical condition or almost dead
+- 50 means average/ok but needs some attention
+- 100 means the plant is in excellent health
+
+Plant data:
+- Name: ${plantName}
+- Type: ${plantType}
+- Soil type: ${plantSoilType}
+- Growth stage: ${plantGrowthStage}
+- Location: ${plantLocation}
+- Date planted or started: ${plantStartDate}
+
+Sensor data:
+- Air quality (AQI): ${airQuality}
+- Air humidity (%): ${airHumidity}
+- Light intensity (lux): ${lightLux}
+- Soil moisture (%): ${soilMoisture}
+- Soil temperature (°F): ${soilTemp}
+
+Consider how well these values match what a healthy ${plantType} plant typically needs.
+
+IMPORTANT:
+- Respond with ONLY a single integer number from 0 to 100.
+- Do not include any explanation, units, labels, or extra text.
+`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-lite",
+      contents: prompt,
+    });
+
+    const raw = (response.text || "").trim();
+    let score = parseInt(raw, 10);
+
+    if (Number.isNaN(score)) {
+      console.warn("Could not parse health score from AI response:", raw);
+      score = 50; // sane fallback
+    }
+
+    // clamp between 0 and 100
+    score = Math.max(0, Math.min(100, score));
+
+    // 🔹 THIS is the important part: we return the AI-derived score
+    res.json({ score });
+  } catch (err) {
+    console.error("Gemini error:", err);
+    res.status(500).json({ error: "AI request failed" });
+  }
+});
 app.listen(port, () => {
   console.log(`Backend listening on http://localhost:${port}`);
 });
