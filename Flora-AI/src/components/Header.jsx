@@ -40,13 +40,13 @@ export default function Header() {
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-3 ml-[-253px] hover:opacity-80 transition-opacity"
             >
               <div className="w-11 h-11 bg-gradient-to-br from-fernGlow to-oliveMist rounded-[16px] flex items-center justify-center shadow-glow">
                 <Leaf className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-darkForestNew tracking-tight">
-                Flora A.I
+                Flora A.I.
               </span>
             </Link>
 
@@ -67,3 +67,5 @@ export default function Header() {
     </header>
   );
 }
+
+
