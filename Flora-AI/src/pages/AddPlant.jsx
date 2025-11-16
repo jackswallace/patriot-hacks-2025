@@ -14,10 +14,20 @@ export default function AddPlant() {
     growthStage: "",
     location: "",
   });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    
     try {
+      // Check if Firebase is properly initialized
+      if (!db) {
+        throw new Error("Firebase is not initialized. Please check your environment variables.");
+      }
+      
       await addDoc(collection(db, "plants"), {
         ...formData,
         createdAt: serverTimestamp(),
@@ -25,6 +35,19 @@ export default function AddPlant() {
       navigate("/dashboard");
     } catch (err) {
       console.error("Error adding plant:", err);
+      let errorMessage = "Failed to add plant. Try again.";
+      
+      // Provide more specific error messages
+      if (err.code === "permission-denied") {
+        errorMessage = "Permission denied. Please check your Firestore security rules.";
+      } else if (err.code === "unavailable") {
+        errorMessage = "Firebase service is unavailable. Please check your internet connection.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setLoading(false);
     }
   }
 
@@ -36,6 +59,10 @@ export default function AddPlant() {
         <h1 className="text-4xl font-bold text-darkForestNew mb-6">
           Add a New Plant
         </h1>
+
+        {error && (
+          <p className="mb-4 text-red-600 font-medium">{error}</p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
@@ -111,12 +138,12 @@ export default function AddPlant() {
               className="w-full h-14 px-4 rounded-xl bg-white border"
             />
           </div>
-
           <button
             type="submit"
-            className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90"
+            disabled={loading}
+            className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add Plant
+            {loading ? "Adding Plant..." : "Add Plant"}
           </button>
         </form>
       </div>
