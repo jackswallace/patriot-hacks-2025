@@ -13,3 +13,16 @@ export async function getPlantAdvice(plantName, moisture, lightHours) {
 
   return res.json(); // { advice: "..." }
 }
+
+export async function nextTimeToWater(moisture) {
+  const res = await fetch('http://localhost:3001/api/NextTimeToWater',{
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({moisture}),
+  });
+  if (!res.ok) {
+    throw new Error('Backend error: ' + res.status);
+  }
+
+  return res.json(); 
+}
