@@ -1,5 +1,5 @@
 // src/pages/PlantDetail.jsxx
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Wind, Droplets, Sun, Thermometer } from "lucide-react";
 import Header from "../components/Header.jsx";
@@ -8,6 +8,7 @@ import SensorCard from "../components/SensorCard.jsx";
 import MiniGraph from "../components/MiniGraph.jsx";
 import RecommendationBox from "../components/RecommendationBox.jsx";
 import AiAdvice from "../components/AiAdvice.jsx";
+import { nextTimeToWater } from "../api.js"; 
 
 // for now: fake data – later read from Firestore by id
 const mockPlant = {
@@ -23,7 +24,8 @@ const mockPlant = {
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const [prediction, setPrediction] = useState(null);
+  const [loadingPrediction, setLoadingPrediction] = useState(false);
   // sample sensor series
   const sensors = useMemo(
     () => ({
@@ -35,6 +37,32 @@ export default function PlantDetail() {
     }),
     []
   );
+  useEffect(() => {
+    // run once when sensors.soilMoisture is available
+    if (sensors.soilMoisture == null) return;
+
+    let cancelled = false;
+    setLoadingPrediction(true);
+
+    (async () => {
+      try {
+        // call your AI backend with soilMoisture
+        const data = await nextTimeToWater(sensors.soilMoisture);
+        if (cancelled) return;
+
+
+        setPrediction(data.advice);
+      } catch (err) {
+        console.error("Error getting AI prediction:", err);
+      } finally {
+        if (!cancelled) setLoadingPrediction(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sensors.soilMoisture]);
 
   const airQualityData = [85, 87, 86, 88, 90, 89, 91, 90];
   const airHumidityData = [62, 64, 63, 65, 67, 66, 68, 67];
@@ -131,7 +159,7 @@ export default function PlantDetail() {
               <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
                 AI Prediction
               </h4>
-              <p className="text-2xl font-bold text-olive">3–4 days</p>
+              <p className="text-2xl font-bold text-olive">{loadingPrediction ? "Calculating..." : prediction || "-"}</p>
               <p className="text-sm text-gray-600 mt-1">
                 Estimated time until next watering
               </p>

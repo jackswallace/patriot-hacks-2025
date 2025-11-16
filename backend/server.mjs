@@ -6,8 +6,8 @@ import { GoogleGenAI } from "@google/genai";
 
 const app = express();
 const port = process.env.PORT || 3001;
-// ✅ allow requests from the frontend
-app.use(cors());              // or: app.use(cors({ origin: 'http://localhost:5173' }));
+
+app.use(cors());              
 app.use(express.json());
 app.use(express.json());
 
@@ -16,20 +16,16 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Simple test route
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, message: 'Backend is alive' });
-});
 
-// Example: AI endpoint for plant advice
-app.post('/api/plant-advice', async (req, res) => {
+app.post('/api/NextTimeToWater', async (req, res) => {
   try {
-    const { plantName, moisture, lightHours } = req.body;
+    const {moisture} = req.body;
 
     const prompt = `
-      Give one short care tip for a ${plantName} plant.
-      Soil moisture: ${moisture}%
-      Light today: ${lightHours} hours
+      Based on the soil moisture level of ${moisture}%,
+      Give an estimate structured like "~X Days" where x is the estimated number of days until 
+      the plant needs watering again. Only return the estimate, no extra text. 
+      
     `;
 
     const response = await ai.models.generateContent({
