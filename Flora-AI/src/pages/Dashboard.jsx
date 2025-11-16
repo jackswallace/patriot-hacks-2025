@@ -3,23 +3,23 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header.jsx";
 import PlantCard from "../components/PlantCard.jsx";
 import { db } from "../firebase.js";
-import { collection, addDoc, getDocs, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 
 export default function Dashboard() {
   const [plants, setPlants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // load plants from Firestore
   useEffect(() => {
-    async function load() {
-      try {
-        const snap = await getDocs(collection(db, "plants"));
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setPlants(data);
-      } catch (e) {
-        console.error("Error loading plants", e);
-      }
-    }
-    load();
+    const plantRef = collection(db, "plants");
+
+    const unsubscribe = onSnapshot(plantRef, (snapshot) => {
+      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPlants(data);
+      setLoading(false);
+    });
+
+    return () => unsubscribe(); // clean up when switching pages
   }, []);
 
   // quick test/add plant button

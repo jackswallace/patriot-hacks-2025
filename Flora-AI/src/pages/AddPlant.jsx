@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { db } from "../firebase.js";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 
 export default function AddPlant() {
-  const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     name: "",
     plantType: "",
@@ -14,18 +12,47 @@ export default function AddPlant() {
     growthStage: "",
     location: "",
   });
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    
     try {
+      // Check if Firebase is properly initialized
+      if (!db) {
+        throw new Error("Firebase is not initialized. Please check your environment variables.");
+      }
+      
       await addDoc(collection(db, "plants"), {
         ...formData,
         createdAt: serverTimestamp(),
       });
-      navigate("/dashboard");
+      setSubmitted(true); // trigger navigation
     } catch (err) {
       console.error("Error adding plant:", err);
+      let errorMessage = "Failed to add plant. Try again.";
+      
+      // Provide more specific error messages
+      if (err.code === "permission-denied") {
+        errorMessage = "Permission denied. Please check your Firestore security rules.";
+      } else if (err.code === "unavailable") {
+        errorMessage = "Firebase service is unavailable. Please check your internet connection.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setLoading(false);
     }
+  }
+
+  // Navigate to dashboard if submitted
+  if (submitted) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -37,6 +64,10 @@ export default function AddPlant() {
           Add a New Plant
         </h1>
 
+        {error && (
+          <p className="mb-4 text-red-600 font-medium">{error}</p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Plant Name */}
@@ -45,7 +76,7 @@ export default function AddPlant() {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => 
+              onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
               placeholder="e.g. Sunflower"
@@ -84,9 +115,7 @@ export default function AddPlant() {
 
           {/* Growth Stage */}
           <div>
-            <label className="block mb-2 text-lg font-medium">
-              Growth Stage
-            </label>
+            <label className="block mb-2 text-lg font-medium">Growth Stage</label>
             <input
               type="text"
               value={formData.growthStage}
@@ -114,9 +143,10 @@ export default function AddPlant() {
 
           <button
             type="submit"
-            className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90"
+            disabled={loading}
+            className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add Plant
+            {loading ? "Adding Plant..." : "Add Plant"}
           </button>
         </form>
       </div>
