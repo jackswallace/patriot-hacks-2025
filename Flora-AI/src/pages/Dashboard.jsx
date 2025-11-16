@@ -1,4 +1,4 @@
-// src/pages/Dashboard.jsxx
+// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header.jsx";
 import PlantCard from "../components/PlantCard.jsx";
