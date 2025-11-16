@@ -45,7 +45,7 @@ export default function AddPlant() {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) =>
+              onChange={(e) => 
                 setFormData({ ...formData, name: e.target.value })
               }
               placeholder="e.g. Sunflower"
