@@ -7,7 +7,7 @@
 //pins
 const int lightPin = 32;
 const int tempPin = 33;
-const int moistPin = 34;
+const int moistPin = 35;
 
 //variables
 int lightVal;
@@ -17,6 +17,7 @@ const int maxWet = 800;   // max value for soil wetness.
 FirebaseData data;
 FirebaseConfig config;
 FirebaseAuth auth;
+String id;
 
 void setup() {
   Serial.begin(115200);
@@ -41,6 +42,10 @@ void setup() {
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
+
+  //sends device id over to firebase.
+  id = WiFi.macAddress();
+  Serial.println("Device ID: " + id);
 }
 
 void loop() {
@@ -55,9 +60,11 @@ void loop() {
   //reads light value from photoresistor as analog.
   lightVal = analogRead(lightPin);
 
-  if (Firebase.setFloat(data, "/sensors/lightLevel", lightVal)) {
+  String lightPath = "/devices/" + id + "/history/lightVal";
+  if (Firebase.pushFloat(data, lightPath, lightVal)) {
     Serial.println("Light Level: " + String(lightVal));
-  } else {
+  }
+  else {
     Serial.println("Light failed: " + data.errorReason());
   }
   //waits 30 seconds until the next send.
@@ -78,15 +85,19 @@ void checkTemp() {
   }
 
   //outputs for both temp and humidity to firebase.
-  if (Firebase.setFloat(data, "/sensors/temperature", temp)) {
+  String tempPath = "/devices/" + id + "/history/temperature";
+  if (Firebase.pushFloat(data, tempPath, temp)) {
     Serial.println("Temperature: " + String(temp));
-  } else {
+  }
+  else {
     Serial.println("Temperature failed: " + data.errorReason());
   }
 
-  if (Firebase.setFloat(data, "/sensors/humidity", hum)) {
+  String humPath = "/devices/" + id + "/history/humidity";
+  if (Firebase.pushFloat(data, humPath, hum)) {
     Serial.println("Humidity: " + String(hum));
-  } else {
+  }
+  else {
     Serial.println("Humidity failed: " + data.errorReason());
   }
 }
@@ -95,13 +106,15 @@ void checkTemp() {
 void checkMoisture() {
   //checks moisture level.
   int moist = analogRead(moistPin);
-  //limits values within 100 percent range
-  int moistPercent = map(moist, maxWet, maxDry, 0, 100);
+
+  int moistPercent = map(moist, maxDry, maxWet, 0, 100);
   moistPercent = constrain(moistPercent, 0, 100);
 
-  if (Firebase.setFloat(data, "/sensors/moisture", moistPercent)) {
+  String moistPath = "/devices/" + id + "/history/moisture";
+  if (Firebase.pushFloat(data, moistPath, moistPercent)) {
     Serial.println("Moisture Percent: " + String(moistPercent));
-  } else {
+  } 
+  else {
     Serial.println("Moisture failed: " + data.errorReason());
   }
 }
