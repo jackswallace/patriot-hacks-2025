@@ -28,7 +28,6 @@ if (missingVars.length > 0) {
 
 // Initialize Firebase
 let app;
-let db;
 
 try {
   app = initializeApp(firebaseConfig);
