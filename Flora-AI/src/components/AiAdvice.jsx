@@ -1,7 +1,7 @@
 // src/components/AiAdvice.jsx
 import React, { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
-import { askPlantAdvice } from "../aiClient";
+import { askPlantAdvice } from "../api.js";
 
 export default function AiAdvice({ plant, sensors }) {
   const [loading, setLoading] = useState(false);
