@@ -98,12 +98,3 @@ If you want to trace the value end-to-end:
 - Routes/pages in `Flora-AI/src/pages/`.
 - To add a new plant for manual testing, modify `PlantDetail.jsx` mock or add a document in Firebase.
 
-## Contributing
-- Create issues or PRs on feature branches.
-- Keep changes small and target a single feature or fix per PR.
-
-## License
-This repository does not include a license file. Add one if you plan to open-source the code.
-
-
-
