@@ -32,8 +32,9 @@ export default function Dashboard() {
         growthStage: "Mature",
         location: "indoor",
         soilMoisture: 45,
-        temperature: 22,
+        temperature: 70,
         lightIntensity: 75,
+        airQuality: 35,
         aiStatus: "healthy",
         createdAt: serverTimestamp(),
       });
@@ -44,7 +45,7 @@ export default function Dashboard() {
           name: "Test Plant",
           type: "Tropical Foliage",
           soilMoisture: 45,
-          temperature: 22,
+          temperature: 70,
           lightIntensity: 75,
           aiStatus: "healthy",
           location: "indoor",
@@ -96,7 +97,7 @@ export default function Dashboard() {
               temperature={p.temperature ?? 22}
               lightLux={p.lightLux ?? p.lightIntensity ?? 520}
               airHumidity={p.airHumidity ?? 67}
-              airQuality={p.airQuality ?? 90}
+              airQuality={p.airQuality ?? 35}
               aiStatus={p.aiStatus || "healthy"}
             />
           ))}

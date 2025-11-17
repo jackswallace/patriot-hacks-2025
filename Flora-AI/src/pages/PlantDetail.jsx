@@ -32,7 +32,7 @@ export default function PlantDetail() {
 
   const sensors = useMemo(
     () => ({
-      airQuality: 90,
+      airQuality: 35,
       airHumidity: 67,
       lightLux: 520,
       soilMoisture: 45,
@@ -63,7 +63,7 @@ export default function PlantDetail() {
 
   const sensorDataSeries = useMemo(
     () => ({
-      airQuality: [85, 87, 86, 88, 90, 89, 91, 90],
+      airQuality: [35, 36, 34, 37, 35, 36, 35, 35],
       airHumidity: [62, 64, 63, 65, 67, 66, 68, 67],
       lightLux: [450, 480, 520, 500, 490, 510, 530, 520],
       soilMoisture: [45, 43, 41, 39, 37, 35, 42, 45],
@@ -98,7 +98,7 @@ export default function PlantDetail() {
   const sensorItems = [
     { title: "Soil Moisture", value: sensors.soilMoisture, unit: "%", data: sensorDataSeries.soilMoisture, Icon: Droplets, color: "#9DBF9E" },
     { title: "Humidity", value: sensors.airHumidity, unit: "%", data: sensorDataSeries.airHumidity, Icon: Droplets, color: "#7A8F69" },
-    { title: "Temperature", value: sensors.soilTemp, unit: "°C", data: sensorDataSeries.soilTemp, Icon: Thermometer, color: "#7A8F69" },
+    { title: "Temperature", value: sensors.soilTemp, unit: "°F", data: sensorDataSeries.soilTemp, Icon: Thermometer, color: "#7A8F69" },
     { title: "Light Intensity", value: sensors.lightLux, unit: "", data: sensorDataSeries.lightLux, Icon: Sun, color: "#A67C52" },
     { title: "Air Quality", value: sensors.airQuality, unit: "AQI", data: sensorDataSeries.airQuality, Icon: Wind, color: "#9DBF9E" },
   ];
