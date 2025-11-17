@@ -1,8 +1,40 @@
 import React, { useState } from "react";
 import { db } from "../firebase.js";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  getDatabase,
+  ref,
+  child,
+  query,
+  orderByKey,
+  limitToLast,
+  get,
+} from "firebase/database";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
+
+const rtdb = getDatabase();
+
+async function getLatestReadings(deviceId) {
+  const metrics = ["humidity", "lightVal", "moisture", "temperature"];
+  const historyRef = ref(rtdb, `devices/${deviceId}/history`);
+  const result = {};
+
+  await Promise.all(
+    metrics.map(async (metric) => {
+      const metricRef = child(historyRef, metric);
+      const q = query(metricRef, orderByKey(), limitToLast(1));
+      const snap = await get(q);
+
+      if (snap.exists()) {
+        const val = Object.values(snap.val())[0];
+        result[metric] = val;
+      }
+    })
+  );
+
+  return result;
+}
 
 export default function AddPlant() {
   const navigate = useNavigate();
@@ -13,7 +45,13 @@ export default function AddPlant() {
     soilType: "",
     growthStage: "",
     location: "",
+    humidity: "",
+    lightVal: "",
+    moisture: "",
+    temperature: "",
   });
+
+  const [selectedSensor, setSelectedSensor] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,24 +59,41 @@ export default function AddPlant() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
       // Check if Firebase is properly initialized
       if (!db) {
         throw new Error("Firebase is not initialized. Please check your environment variables.");
       }
-      
+
+      let sensorData = {};
+
+      if (selectedSensor === "sensor1") {
+        const deviceId = "04:83:08:57:36:A4";
+        sensorData = await getLatestReadings(deviceId);
+      } else if (selectedSensor && selectedSensor !== "sensor1") {
+        // Fallback / mock data for other sensors
+        const deviceId = "04:83:08:57:36:A4"; // if you need it later
+        sensorData = {
+          humidity: 53,
+          lightVal: 1200,
+          moisture: 42,
+          temperature: 73.5,
+        };
+      }
+
       await addDoc(collection(db, "plants"), {
         ...formData,
+        ...sensorData, // sensor values override blank form fields
         airQuality: 35,
         createdAt: serverTimestamp(),
       });
+
       navigate("/dashboard");
     } catch (err) {
       console.error("Error adding plant:", err);
       let errorMessage = "Failed to add plant. Try again.";
-      
-      // Provide more specific error messages
+
       if (err.code === "permission-denied") {
         errorMessage = "Permission denied. Please check your Firestore security rules.";
       } else if (err.code === "unavailable") {
@@ -46,8 +101,9 @@ export default function AddPlant() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
+    } finally {
       setLoading(false);
     }
   }
@@ -66,14 +122,13 @@ export default function AddPlant() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
           {/* Plant Name */}
           <div>
             <label className="block mb-2 text-lg font-medium">Plant Name</label>
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => 
+              onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
               placeholder="e.g. Sunflower"
@@ -139,13 +194,46 @@ export default function AddPlant() {
               className="w-full h-14 px-4 rounded-xl bg-white border"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Adding Plant..." : "Add Plant"}
-          </button>
+
+          {/* Submit + Sensor Dropdown */}
+          <div className="flex items-center gap-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-14 bg-darkForestNew text-white font-semibold rounded-xl hover:bg-darkForestNew/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Adding Plant..." : "Add Plant"}
+            </button>
+
+            <label className="flex flex-col text-sm whitespace-nowrap">
+              <span className="mb-1 text-darkForestNew font-medium">
+                Sensor
+              </span>
+              <select
+                className="
+                  h-14
+                  rounded-xl
+                  bg-darkForestNew
+                  text-white
+                  px-3
+                  font-semibold
+                  border border-darkForestNew
+                  hover:bg-darkForestNew/90
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-darkForestNew/70
+                  cursor-pointer
+                "
+                value={selectedSensor}
+                onChange={(e) => setSelectedSensor(e.target.value)}
+              >
+                <option value="">Select sensor</option>
+                <option value="sensor1">Sensor 1</option>
+                <option value="sensor2">Sensor 2</option>
+                <option value="sensor3">Sensor 3</option>
+              </select>
+            </label>
+          </div>
         </form>
       </div>
     </div>
