@@ -28,6 +28,17 @@ export default function PlantCard({
       color: "from-fernGlow to-oliveMist",
       glow: "shadow-glow",
     },
+    "needs-attention": {
+      label: "Needs Attention",
+      color: "from-yellow-400 to-orange-400",
+      glow: "shadow-[0_0_20px_rgba(251,191,36,0.3)]",
+    },
+    critical: {
+      label: "Critical",
+      color: "from-red-500 to-red-600",
+      glow: "shadow-[0_0_20px_rgba(239,68,68,0.4)]",
+    },
+    // Legacy status values (for backwards compatibility)
     "needs-water": {
       label: "Needs Water",
       color: "from-yellow-400 to-orange-400",
@@ -40,7 +51,7 @@ export default function PlantCard({
     },
   };
 
-  const status = statusConfig[aiStatus];
+  const status = statusConfig[aiStatus] || statusConfig.healthy;
 
   return (
     <Link to={`/plant/${id}`}>
@@ -116,7 +127,7 @@ export default function PlantCard({
               <span className="text-xs font-medium text-gray-600">Temp</span>
             </div>
             <span className="text-xs font-bold text-darkForestNew">
-              {temperature}°F
+              {temperature}Â°F
             </span>
           </div>
 

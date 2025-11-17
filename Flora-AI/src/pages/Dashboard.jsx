@@ -6,12 +6,28 @@ import { db, rtdb } from "../firebase.js";
 import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { ref, onValue, query, orderByKey, limitToLast, child } from "firebase/database";
 
+// Helper function to determine plant status based on AI health score
+function determineAiStatus(healthScore) {
+  // Red alert if health score below 25
+  if (healthScore < 25) {
+    return 'critical';
+  }
+  
+  // Yellow warning if health score below 60
+  if (healthScore < 60) {
+    return 'needs-attention';
+  }
+  
+  // Green/healthy if score is 60 or above
+  return 'healthy';
+}
+
 export default function Dashboard() {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sensorData, setSensorData] = useState({});
 
-  // load plants from Firestore
+  // Load plants from Firestore
   useEffect(() => {
     const plantRef = collection(db, "plants");
 
@@ -21,14 +37,13 @@ export default function Dashboard() {
       setLoading(false);
     });
 
-    return () => unsubscribe(); // clean up when switching pages
+    return () => unsubscribe();
   }, []);
 
   // Fetch sensor data from Realtime Database in real-time
   useEffect(() => {
     if (!rtdb) return;
 
-    // Default deviceId - you can also store this per plant in Firestore
     const deviceId = "04:83:08:57:36:A4";
     const historyRef = ref(rtdb, `devices/${deviceId}/history`);
 
@@ -47,7 +62,6 @@ export default function Dashboard() {
           setSensorData((prev) => {
             const updated = { ...prev };
             
-            // Map Realtime DB field names to component field names
             if (metric === "humidity") updated.airHumidity = latestValue;
             else if (metric === "lightVal") updated.lightLux = latestValue;
             else if (metric === "moisture") updated.soilMoisture = latestValue;
@@ -68,7 +82,7 @@ export default function Dashboard() {
     };
   }, [rtdb]);
 
-  // quick test/add plant button
+  // Quick test/add plant button
   async function handleAddTestPlant() {
     try {
       const docRef = await addDoc(collection(db, "plants"), {
@@ -132,21 +146,36 @@ export default function Dashboard() {
 
         {/* grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {plants.map((p) => (
-            <PlantCard
-              key={p.id}
-              id={p.id}
-              name={p.name}
-              type={p.type}
-              location={p.location || "indoor"}
-              soilMoisture={sensorData.soilMoisture ?? p.soilMoisture ?? 45}
-              temperature={sensorData.temperature ?? p.temperature ?? 22}
-              lightLux={sensorData.lightLux ?? p.lightLux ?? p.lightIntensity ?? 520}
-              airHumidity={sensorData.airHumidity ?? p.airHumidity ?? 67}
-              airQuality={p.airQuality ?? 35}
-              aiStatus={p.aiStatus || "healthy"}
-            />
-          ))}
+          {plants.map((p) => {
+            // Use sensor data if available, otherwise fall back to plant data
+            const currentSoilMoisture = sensorData.soilMoisture ?? p.soilMoisture ?? 45;
+            const currentLightLux = sensorData.lightLux ?? p.lightLux ?? p.lightIntensity ?? 520;
+            const currentAirHumidity = sensorData.airHumidity ?? p.airHumidity ?? 67;
+            const currentTemperature = sensorData.temperature ?? p.temperature ?? 22;
+            
+            // 🔥 KEY FIX: Determine status dynamically based on actual sensor values
+            const aiStatus = determineAiStatus(
+              currentSoilMoisture,
+              currentLightLux,
+              currentAirHumidity
+            );
+
+            return (
+              <PlantCard
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                type={p.type}
+                location={p.location || "indoor"}
+                soilMoisture={currentSoilMoisture}
+                temperature={currentTemperature}
+                lightLux={currentLightLux}
+                airHumidity={currentAirHumidity}
+                airQuality={p.airQuality ?? 35}
+                aiStatus={aiStatus}  // 🔥 Now uses dynamically determined status
+              />
+            );
+          })}
           {plants.length === 0 && (
             <p className="text-gray-600">
               No plants yet – click <b>Add Test Plant</b> or use the
