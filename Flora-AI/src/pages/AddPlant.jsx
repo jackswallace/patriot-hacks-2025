@@ -30,6 +30,7 @@ export default function AddPlant() {
       
       await addDoc(collection(db, "plants"), {
         ...formData,
+        airQuality: 35,
         createdAt: serverTimestamp(),
       });
       navigate("/dashboard");
