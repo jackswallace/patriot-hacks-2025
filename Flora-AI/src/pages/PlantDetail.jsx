@@ -9,8 +9,9 @@ import MiniGraph from "../components/MiniGraph.jsx";
 import AiAdvice from "../components/AiAdvice.jsx";
 import { nextTimeToWater } from "../api.js";
 import { getAIHealthScore } from "../api.js";
-import { db } from "../firebase.js";
+import { db, rtdb } from "../firebase.js";
 import { doc, onSnapshot } from "firebase/firestore";
+import { ref, onValue, query, orderByKey, limitToLast, child } from "firebase/database";
 
 export default function PlantDetail() {
   const { id } = useParams();
@@ -21,6 +22,13 @@ export default function PlantDetail() {
   const [loadingPrediction, setLoadingPrediction] = useState(false);
   const [aiHealthScore, setAiHealthScore] = useState(85);
   const [loadingHealthScore, setLoadingHealthScore] = useState(false);
+  const [sensors, setSensors] = useState({
+    airQuality: 35,
+    airHumidity: 67,
+    lightLux: 520,
+    soilMoisture: 45,
+    soilTemp: 22,
+  });
 
   // Fetch plant data from Firestore
   useEffect(() => {
@@ -42,17 +50,49 @@ export default function PlantDetail() {
     return () => unsubscribe();
   }, [id]);
 
+  // Fetch sensor data from Realtime Database in real-time
+  useEffect(() => {
+    if (!rtdb) return;
 
-  const sensors = useMemo(
-    () => ({
-      airQuality: 35,
-      airHumidity: 67,
-      lightLux: 520,
-      soilMoisture: 45,
-      soilTemp: 22,
-    }),
-    []
-  );
+    // Default deviceId - you can also store this in the plant document
+    const deviceId = plant?.deviceId || "04:83:08:57:36:A4";
+    const historyRef = ref(rtdb, `devices/${deviceId}/history`);
+
+    const metrics = ["humidity", "lightVal", "moisture", "temperature"];
+    const unsubscribes = [];
+
+    metrics.forEach((metric) => {
+      const metricRef = child(historyRef, metric);
+      const q = query(metricRef, orderByKey(), limitToLast(1));
+      
+      const unsubscribe = onValue(q, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const latestValue = Object.values(data)[0];
+          
+          setSensors((prev) => {
+            const updated = { ...prev };
+            
+            // Map Realtime DB field names to component field names
+            if (metric === "humidity") updated.airHumidity = latestValue;
+            else if (metric === "lightVal") updated.lightLux = latestValue;
+            else if (metric === "moisture") updated.soilMoisture = latestValue;
+            else if (metric === "temperature") updated.soilTemp = latestValue;
+            
+            return updated;
+          });
+        }
+      }, (error) => {
+        console.error(`Error listening to ${metric}:`, error);
+      });
+
+      unsubscribes.push(unsubscribe);
+    });
+
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [rtdb, plant?.deviceId]);
   useEffect(() => {
     if (!plant) return;
     
@@ -85,13 +125,13 @@ export default function PlantDetail() {
 
   const sensorDataSeries = useMemo(
     () => ({
-      airQuality: [35, 36, 34, 37, 35, 36, 35, 35],
-      airHumidity: [62, 64, 63, 65, 67, 66, 68, 67],
-      lightLux: [450, 480, 520, 500, 490, 510, 530, 520],
-      soilMoisture: [45, 43, 41, 39, 37, 35, 42, 45],
-      soilTemp: [21, 21.5, 22, 22, 21.8, 22.2, 22.1, 22],
+      airQuality: [35, 36, 34, 37, sensors.airQuality, 36, 35, sensors.airQuality],
+      airHumidity: [62, 64, 63, 65, sensors.airHumidity, 66, 68, sensors.airHumidity],
+      lightLux: [450, 480, sensors.lightLux, 500, 490, 510, 530, sensors.lightLux],
+      soilMoisture: [45, 43, 41, 39, 37, 35, sensors.soilMoisture, sensors.soilMoisture],
+      soilTemp: [21, 21.5, sensors.soilTemp, sensors.soilTemp, 21.8, 22.2, 22.1, sensors.soilTemp],
     }),
-    []
+    [sensors]
   );
 
   useEffect(() => {

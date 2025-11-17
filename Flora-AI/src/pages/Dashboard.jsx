@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header.jsx";
 import PlantCard from "../components/PlantCard.jsx";
-import { db } from "../firebase.js";
+import { db, rtdb } from "../firebase.js";
 import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { ref, onValue, query, orderByKey, limitToLast, child } from "firebase/database";
 
 export default function Dashboard() {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sensorData, setSensorData] = useState({});
 
   // load plants from Firestore
   useEffect(() => {
@@ -21,6 +23,50 @@ export default function Dashboard() {
 
     return () => unsubscribe(); // clean up when switching pages
   }, []);
+
+  // Fetch sensor data from Realtime Database in real-time
+  useEffect(() => {
+    if (!rtdb) return;
+
+    // Default deviceId - you can also store this per plant in Firestore
+    const deviceId = "04:83:08:57:36:A4";
+    const historyRef = ref(rtdb, `devices/${deviceId}/history`);
+
+    const metrics = ["humidity", "lightVal", "moisture", "temperature"];
+    const unsubscribes = [];
+
+    metrics.forEach((metric) => {
+      const metricRef = child(historyRef, metric);
+      const q = query(metricRef, orderByKey(), limitToLast(1));
+      
+      const unsubscribe = onValue(q, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const latestValue = Object.values(data)[0];
+          
+          setSensorData((prev) => {
+            const updated = { ...prev };
+            
+            // Map Realtime DB field names to component field names
+            if (metric === "humidity") updated.airHumidity = latestValue;
+            else if (metric === "lightVal") updated.lightLux = latestValue;
+            else if (metric === "moisture") updated.soilMoisture = latestValue;
+            else if (metric === "temperature") updated.temperature = latestValue;
+            
+            return updated;
+          });
+        }
+      }, (error) => {
+        console.error(`Error listening to ${metric}:`, error);
+      });
+
+      unsubscribes.push(unsubscribe);
+    });
+
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [rtdb]);
 
   // quick test/add plant button
   async function handleAddTestPlant() {
@@ -93,10 +139,10 @@ export default function Dashboard() {
               name={p.name}
               type={p.type}
               location={p.location || "indoor"}
-              soilMoisture={p.soilMoisture ?? 45}
-              temperature={p.temperature ?? 22}
-              lightLux={p.lightLux ?? p.lightIntensity ?? 520}
-              airHumidity={p.airHumidity ?? 67}
+              soilMoisture={sensorData.soilMoisture ?? p.soilMoisture ?? 45}
+              temperature={sensorData.temperature ?? p.temperature ?? 22}
+              lightLux={sensorData.lightLux ?? p.lightLux ?? p.lightIntensity ?? 520}
+              airHumidity={sensorData.airHumidity ?? p.airHumidity ?? 67}
               airQuality={p.airQuality ?? 35}
               aiStatus={p.aiStatus || "healthy"}
             />

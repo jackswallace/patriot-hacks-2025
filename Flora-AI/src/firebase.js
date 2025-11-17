@@ -4,6 +4,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 
 // Paste YOUR config from Firebase Console
 const firebaseConfig = {
@@ -28,16 +29,22 @@ if (missingVars.length > 0) {
 
 // Initialize Firebase
 let app;
+let db;
+let rtdb;
 
 try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  rtdb = getDatabase(app);
 } catch (error) {
   console.error('Error initializing Firebase:', error);
-  // db will be undefined, which will be caught in the components
+  // db and rtdb will be undefined, which will be caught in the components
 }
 
 // Export Firestore instance
-export const db = getFirestore(app);
+export { db };
+
+// Export Realtime Database instance
+export { rtdb };
 
 export const auth = getAuth(app);
