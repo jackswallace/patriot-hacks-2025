@@ -206,9 +206,6 @@ export default function AddPlant() {
             </button>
 
             <label className="flex flex-col text-sm whitespace-nowrap">
-              <span className="mb-1 text-darkForestNew font-medium">
-                Sensor
-              </span>
               <select
                 className="
                   h-14
