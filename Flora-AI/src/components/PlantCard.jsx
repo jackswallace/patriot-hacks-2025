@@ -127,7 +127,7 @@ export default function PlantCard({
               <span className="text-xs font-medium text-gray-600">Temp</span>
             </div>
             <span className="text-xs font-bold text-darkForestNew">
-              {temperature}Â°F
+              {temperature}°F
             </span>
           </div>
 

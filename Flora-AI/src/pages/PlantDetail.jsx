@@ -52,9 +52,25 @@ export default function PlantDetail() {
 
   // Fetch sensor data from Realtime Database in real-time
   useEffect(() => {
-    if (!rtdb) return;
+    if (!rtdb || !plant) return;
 
-    // Default deviceId - you can also store this in the plant document
+    // Check if plant name is "Test Plant" or "Orange" - use Firestore values for these
+    const useFirestoreValues = plant.name === "Test Plant" || plant.name === "Orange" || plant.name?.startsWith("Test Plant");
+    
+    if (useFirestoreValues) {
+      // Use Firestore values for Test Plant and Orange
+      // Handle both naming conventions: humidity/moisture vs airHumidity/soilMoisture
+      setSensors({
+        airQuality: plant.airQuality ?? 35,
+        airHumidity: plant.airHumidity ?? plant.humidity ?? 67,
+        lightLux: plant.lightLux ?? plant.lightIntensity ?? 520,
+        soilMoisture: plant.soilMoisture ?? plant.moisture ?? 45,
+        soilTemp: plant.temperature ?? 22,
+      });
+      return;
+    }
+
+    // For other plants, fetch from Realtime Database
     const deviceId = plant?.deviceId || "04:83:08:57:36:A4";
     const historyRef = ref(rtdb, `devices/${deviceId}/history`);
 
@@ -92,7 +108,7 @@ export default function PlantDetail() {
     return () => {
       unsubscribes.forEach((unsub) => unsub());
     };
-  }, [rtdb, plant?.deviceId]);
+  }, [rtdb, plant]);
   useEffect(() => {
     if (!plant) return;
     
