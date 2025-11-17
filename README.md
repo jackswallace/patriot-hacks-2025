@@ -105,12 +105,5 @@ If you want to trace the value end-to-end:
 ## License
 This repository does not include a license file. Add one if you plan to open-source the code.
 
----
 
-If you'd like, I can:
-- add a `CONTRIBUTING.md`,
-- wire up a demo Firebase config example file, or
-- update `PlantInfoCard.jsx` to display a tooltip explaining how the AI score is calculated.
-
-Happy to make any additional README changes — tell me which parts to expand.
 
