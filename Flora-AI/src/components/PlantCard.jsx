@@ -5,6 +5,7 @@ import {
   Droplets,
   Thermometer,
   Sun,
+  Wind,
   Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -16,7 +17,9 @@ export default function PlantCard({
   location,
   soilMoisture,
   temperature,
-  lightIntensity,
+  lightLux,
+  airHumidity,
+  airQuality,
   aiStatus,
 }) {
   const statusConfig = {
@@ -87,33 +90,55 @@ export default function PlantCard({
             </div>
           </div>
 
-          {/* temp */}
+          {/* humidity */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Thermometer className="w-4 h-4 text-oliveMist" />
-                <span className="text-xs font-medium text-gray-600">Temp</span>
+                <Droplets className="w-4 h-4 text-oliveMist" />
+                <span className="text-xs font-medium text-gray-600">Humidity</span>
               </div>
               <span className="text-xs font-bold text-darkForestNew">
-                {temperature}°C
+                {airHumidity}%
               </span>
             </div>
             <div className="w-full h-2 bg-gray-200/50 rounded-full overflow-hidden backdrop-blur-sm">
               <div
-                className="h-2 bg-gradient-to-r from-oliveMist to-darkForestNew rounded-full"
-                style={{ width: `${(temperature / 40) * 100}%` }}
+                className="h-2 bg-gradient-to-r from-fernGlow to-oliveMist rounded-full"
+                style={{ width: `${airHumidity}%` }}
               />
             </div>
           </div>
 
-          {/* light */}
+          {/* temperature */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Thermometer className="w-4 h-4 text-oliveMist" />
+              <span className="text-xs font-medium text-gray-600">Temp</span>
+            </div>
+            <span className="text-xs font-bold text-darkForestNew">
+              {temperature}°C
+            </span>
+          </div>
+
+          {/* light intensity */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sun className="w-4 h-4 text-oliveMist" />
-              <span className="text-xs font-medium text-gray-600">Light</span>
+              <span className="text-xs font-medium text-gray-600">Light Intensity</span>
             </div>
             <span className="text-xs font-bold text-darkForestNew">
-              {lightIntensity}%
+              {lightLux}
+            </span>
+          </div>
+
+          {/* air quality */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Wind className="w-4 h-4 text-oliveMist" />
+              <span className="text-xs font-medium text-gray-600">Air Quality</span>
+            </div>
+            <span className="text-xs font-bold text-darkForestNew">
+              {airQuality} AQI
             </span>
           </div>
         </div>

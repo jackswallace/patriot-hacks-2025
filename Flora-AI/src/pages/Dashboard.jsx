@@ -92,9 +92,11 @@ export default function Dashboard() {
               name={p.name}
               type={p.type}
               location={p.location || "indoor"}
-              soilMoisture={p.soilMoisture ?? 40}
+              soilMoisture={p.soilMoisture ?? 45}
               temperature={p.temperature ?? 22}
-              lightIntensity={p.lightIntensity ?? 70}
+              lightLux={p.lightLux ?? p.lightIntensity ?? 520}
+              airHumidity={p.airHumidity ?? 67}
+              airQuality={p.airQuality ?? 90}
               aiStatus={p.aiStatus || "healthy"}
             />
           ))}
