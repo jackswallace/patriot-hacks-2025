@@ -82,40 +82,6 @@ export default function Dashboard() {
     };
   }, [rtdb]);
 
-  // Quick test/add plant button
-  async function handleAddTestPlant() {
-    try {
-      const docRef = await addDoc(collection(db, "plants"), {
-        name: "Test Plant " + Date.now(),
-        type: "Tropical Foliage",
-        soilType: "Miracle-Gro potting mix",
-        growthStage: "Mature",
-        location: "indoor",
-        soilMoisture: 45,
-        temperature: 70,
-        lightIntensity: 75,
-        airQuality: 35,
-        aiStatus: "healthy",
-        createdAt: serverTimestamp(),
-      });
-      setPlants((prev) => [
-        ...prev,
-        {
-          id: docRef.id,
-          name: "Test Plant",
-          type: "Tropical Foliage",
-          soilMoisture: 45,
-          temperature: 70,
-          lightIntensity: 75,
-          aiStatus: "healthy",
-          location: "indoor",
-        },
-      ]);
-    } catch (e) {
-      console.error("Error adding test plant", e);
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-warmSand via-eucalyptus/30 to-warmSand relative">
       {/* blobs */}
@@ -136,12 +102,7 @@ export default function Dashboard() {
               Monitor and nurture your botanical collection
             </p>
           </div>
-          <button
-            onClick={handleAddTestPlant}
-            className="px-5 py-3 bg-white/70 rounded-full border border-fernGlow text-darkForestNew font-semibold hover:bg-white shadow-sm"
-          >
-            Add Test Plant (Firestore)
-          </button>
+          
         </div>
 
         {/* grid */}
@@ -153,7 +114,7 @@ export default function Dashboard() {
             const currentAirHumidity = sensorData.airHumidity ?? p.airHumidity ?? 67;
             const currentTemperature = sensorData.temperature ?? p.temperature ?? 22;
             
-            // 🔥 KEY FIX: Determine status dynamically based on actual sensor values
+           
             const aiStatus = determineAiStatus(
               currentSoilMoisture,
               currentLightLux,
@@ -172,7 +133,7 @@ export default function Dashboard() {
                 lightLux={currentLightLux}
                 airHumidity={currentAirHumidity}
                 airQuality={p.airQuality ?? 35}
-                aiStatus={aiStatus}  // 🔥 Now uses dynamically determined status
+                aiStatus={aiStatus}  
               />
             );
           })}
