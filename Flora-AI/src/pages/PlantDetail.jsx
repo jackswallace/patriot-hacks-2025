@@ -9,25 +9,38 @@ import MiniGraph from "../components/MiniGraph.jsx";
 import AiAdvice from "../components/AiAdvice.jsx";
 import { nextTimeToWater } from "../api.js";
 import { getAIHealthScore } from "../api.js";
-
-
-const mockPlant = {
-  name: "Monstera Deliciosa",
-  type: "Tropical Foliage",
-  soilType: "Well-draining potting mix",
-  growthStage: "Mature",
-  location: "indoor",
-  startDate: "2024-03-15",
-  aiHealthScore: 87,
-};
+import { db } from "../firebase.js";
+import { doc, onSnapshot } from "firebase/firestore";
 
 export default function PlantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [plant, setPlant] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [prediction, setPrediction] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
-  const [aiHealthScore, setAiHealthScore] = useState(mockPlant.aiHealthScore);
+  const [aiHealthScore, setAiHealthScore] = useState(85);
   const [loadingHealthScore, setLoadingHealthScore] = useState(false);
+
+  // Fetch plant data from Firestore
+  useEffect(() => {
+    if (!id || !db) {
+      setLoading(false);
+      return;
+    }
+
+    const plantRef = doc(db, "plants", id);
+    const unsubscribe = onSnapshot(plantRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setPlant({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        console.error("Plant not found");
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [id]);
 
 
   const sensors = useMemo(
@@ -41,12 +54,21 @@ export default function PlantDetail() {
     []
   );
   useEffect(() => {
+    if (!plant) return;
+    
     let cancelled = false;
     setLoadingHealthScore(true);
 
     (async () => {
       try {
-        const score = await getAIHealthScore(mockPlant, sensors);
+        const plantInfo = {
+          name: plant.name,
+          type: plant.type || plant.plantType,
+          soilType: plant.soilType,
+          growthStage: plant.growthStage,
+          location: plant.location || "indoor",
+        };
+        const score = await getAIHealthScore(plantInfo, sensors);
         if (cancelled) return;
         setAiHealthScore(score);
       } catch (err) {
@@ -59,7 +81,7 @@ export default function PlantDetail() {
     return () => {
       cancelled = true;
     };
-  }, [sensors]);
+  }, [plant, sensors]);
 
   const sensorDataSeries = useMemo(
     () => ({
@@ -103,6 +125,50 @@ export default function PlantDetail() {
     { title: "Air Quality", value: sensors.airQuality, unit: "AQI", data: sensorDataSeries.airQuality, Icon: Wind, color: "#9DBF9E" },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-offWhite to-sand">
+        <Header />
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading plant data...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!plant) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-offWhite to-sand">
+        <Header />
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 text-olive hover:text-darkForest font-semibold mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Dashboard
+          </button>
+          <div className="text-center py-12">
+            <p className="text-gray-600">Plant not found</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Prepare plant data for PlantInfoCard
+  const plantInfo = {
+    name: plant.name,
+    type: plant.type || plant.plantType,
+    soilType: plant.soilType,
+    growthStage: plant.growthStage,
+    location: plant.location || "indoor",
+    startDate: plant.startDate || plant.createdAt?.toDate?.()?.toISOString()?.split('T')[0] || new Date().toISOString().split('T')[0],
+    aiHealthScore: aiHealthScore,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-offWhite to-sand">
       <Header />
@@ -116,7 +182,7 @@ export default function PlantDetail() {
         </button>
 
         <div className="mb-8">
-          <PlantInfoCard plant={ { ...mockPlant, aiHealthScore }} />
+          <PlantInfoCard plant={plantInfo} />
         </div>
 
         {/* two-column sensor grid */}
@@ -147,7 +213,7 @@ export default function PlantDetail() {
           </div>
         </div>
 
-        <AiAdvice plant={mockPlant} sensors={sensors} />
+        <AiAdvice plant={plantInfo} sensors={sensors} />
       </main>
     </div>
   );

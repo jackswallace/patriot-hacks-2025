@@ -60,7 +60,7 @@ export default function PlantInfoCard({ plant }) {
               </span>
             </div>
             <p className="text-gray-800 font-semibold">
-              {location === "indoor" ? "Indoor" : "Outdoor"}
+              {location || "—"}
             </p>
 
             <div className="flex items-center gap-2 mt-4">
