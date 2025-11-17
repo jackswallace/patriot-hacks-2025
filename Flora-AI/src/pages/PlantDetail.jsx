@@ -71,11 +71,11 @@ export default function PlantDetail() {
   }, [sensors.soilMoisture]);
 
   const sensorItems = [
-    { title: "Air Quality", value: sensors.airQuality, unit: "AQI", data: sensorDataSeries.airQuality, Icon: Wind, color: "#9DBF9E" },
-    { title: "Air Humidity", value: sensors.airHumidity, unit: "%", data: sensorDataSeries.airHumidity, Icon: Droplets, color: "#7A8F69" },
-    { title: "Light Intensity", value: sensors.lightLux, unit: "lux", data: sensorDataSeries.lightLux, Icon: Sun, color: "#A67C52" },
     { title: "Soil Moisture", value: sensors.soilMoisture, unit: "%", data: sensorDataSeries.soilMoisture, Icon: Droplets, color: "#9DBF9E" },
-    { title: "Soil Temperature", value: sensors.soilTemp, unit: "°C", data: sensorDataSeries.soilTemp, Icon: Thermometer, color: "#7A8F69" },
+    { title: "Humidity", value: sensors.airHumidity, unit: "%", data: sensorDataSeries.airHumidity, Icon: Droplets, color: "#7A8F69" },
+    { title: "Temperature", value: sensors.soilTemp, unit: "°C", data: sensorDataSeries.soilTemp, Icon: Thermometer, color: "#7A8F69" },
+    { title: "Light Intensity", value: sensors.lightLux, unit: "", data: sensorDataSeries.lightLux, Icon: Sun, color: "#A67C52" },
+    { title: "Air Quality", value: sensors.airQuality, unit: "AQI", data: sensorDataSeries.airQuality, Icon: Wind, color: "#9DBF9E" },
   ];
 
   return (
