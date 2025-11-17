@@ -50,6 +50,21 @@ Notes:
 - If you only want to view a demo, `PlantDetail.jsx` contains `mockPlant` data (includes `aiHealthScore: 87`).
 
 ## Setup & Run (Backend)
+### Environment variables (`.env`) — `dotenv`
+
+- The backend uses `dotenv` to load environment variables from a `.env` file in the `backend/` directory.
+- Create a file named `backend/.env` (do NOT commit this file). Example contents:
+
+```
+# backend/.env (example)
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=3001
+# Add any other secrets or config values here
+```
+
+- `GEMINI_API_KEY` is required for the Gemini AI requests used in `server.mjs`.
+- `PORT` is optional (defaults to `3001` if not set).
+- Keep `.env` out of version control — add `backend/.env` to your `.gitignore` if needed.
 
 Open a PowerShell terminal and run:
 
